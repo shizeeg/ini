@@ -40,7 +40,6 @@ BIO = """Gopher.
 Coding addict.
 Good man.
 """
-
 [package]
 CLONE_URL = https://%(IMPORT_PATH)s
 
@@ -175,7 +174,7 @@ func Test_Values(t *testing.T) {
 
 		Convey("Get sections", func() {
 			sections := cfg.Sections()
-			for i, name := range []string{DEFAULT_SECTION, "author", "package", "package.sub", "features", "types", "array", "note", "advance"} {
+			for i, name := range []string{DefaultSection, "author", "package", "package.sub", "features", "types", "array", "note", "advance"} {
 				So(sections[i].Name(), ShouldEqual, name)
 			}
 		})
@@ -282,8 +281,17 @@ func Test_Values(t *testing.T) {
 
 		Convey("Delete a section", func() {
 			cfg.DeleteSection("")
-			So(cfg.SectionStrings()[0], ShouldNotEqual, DEFAULT_SECTION)
+			So(cfg.SectionStrings()[0], ShouldNotEqual, DefaultSection)
 		})
+	})
+	Convey("Unquote test", t, func() {
+		cfg, err := Load("testdata/new.cfg")
+		So(err, ShouldBeNil)
+		So(cfg, ShouldNotBeNil)
+
+		sec := cfg.Section("unquote")
+		So(sec, ShouldNotBeNil)
+		So(sec.Key("test").String(), ShouldEqual, "value")
 	})
 
 	Convey("Test getting and setting bad values", t, func() {

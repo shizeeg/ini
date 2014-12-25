@@ -30,18 +30,20 @@ import (
 )
 
 const (
-	DEFAULT_SECTION = "DEFAULT"
+	// DefaultSection is the name of empty section
+	DefaultSection = "DEFAULT"
 	// Maximum allowed depth when recursively substituing variable names.
-	_DEPTH_VALUES = 99
+	_DepthValues = 99
 )
 
 var (
+	// LineBreak depends on OS. LF by default (Linux)
 	LineBreak = "\n"
 
 	// Variable regexp pattern: %(variable)s
 	varPattern = regexp.MustCompile(`%\(([^\)]+)\)s`)
 
-	// Write spaces around "=" to look better.
+	// PrettyFormat put spaces around "=" to look better.
 	PrettyFormat = true
 )
 
@@ -107,14 +109,26 @@ func (k *Key) Value() string {
 	return k.value
 }
 
-// String returns string representation of value.
+// String returns string representation of a value (without quotes)
 func (k *Key) String() string {
+	vlen := len(k.value) - 1
+	if vlen <= 1 {
+		return k.Expand()
+	}
+	if k.value[0] == '"' && k.value[vlen] == '"' {
+		return k.Expand()[1:vlen]
+	}
+	return k.Expand()
+}
+
+// Expand returns string representation of value.
+func (k *Key) Expand() string {
 	val := k.value
 	if strings.Index(val, "%") == -1 {
 		return val
 	}
 
-	for i := 0; i < _DEPTH_VALUES; i++ {
+	for i := 0; i < _DepthValues; i++ {
 		vr := varPattern.FindString(val)
 		if len(vr) == 0 {
 			break
@@ -209,7 +223,7 @@ func (k *Key) In(defaultVal string, candidates []string) string {
 	return defaultVal
 }
 
-// In always returns value without error,
+// InFloat64 always returns value without error,
 // it returns default value if error occurs or doesn't fit into candidates.
 func (k *Key) InFloat64(defaultVal float64, candidates []float64) float64 {
 	val := k.MustFloat64()
@@ -221,7 +235,7 @@ func (k *Key) InFloat64(defaultVal float64, candidates []float64) float64 {
 	return defaultVal
 }
 
-// In always returns value without error,
+// InInt always returns value without error,
 // it returns default value if error occurs or doesn't fit into candidates.
 func (k *Key) InInt(defaultVal int, candidates []int) int {
 	val := k.MustInt()
@@ -233,7 +247,7 @@ func (k *Key) InInt(defaultVal int, candidates []int) int {
 	return defaultVal
 }
 
-// In always returns value without error,
+// InInt64 always returns value without error,
 // it returns default value if error occurs or doesn't fit into candidates.
 func (k *Key) InInt64(defaultVal int64, candidates []int64) int64 {
 	val := k.MustInt64()
@@ -496,7 +510,7 @@ func (f *File) NewSection(name string) (*Section, error) {
 // GetSection returns section by given name.
 func (f *File) GetSection(name string) (*Section, error) {
 	if len(name) == 0 {
-		name = DEFAULT_SECTION
+		name = DefaultSection
 	}
 
 	if f.BlockMode {
@@ -520,7 +534,7 @@ func (f *File) Section(name string) *Section {
 	return sec
 }
 
-// Section returns list of Section.
+// Sections returns list of Section.
 func (f *File) Sections() []*Section {
 	sections := make([]*Section, len(f.sectionList))
 	for i := range f.sectionList {
@@ -544,7 +558,7 @@ func (f *File) DeleteSection(name string) {
 	}
 
 	if len(name) == 0 {
-		name = DEFAULT_SECTION
+		name = DefaultSection
 	}
 
 	for i, s := range f.sectionList {
@@ -571,7 +585,7 @@ func (f *File) parse(reader io.Reader) error {
 	comments := ""
 	isEnd := false
 
-	section, err := f.NewSection(DEFAULT_SECTION)
+	section, err := f.NewSection(DefaultSection)
 	if err != nil {
 		return err
 	}
