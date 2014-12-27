@@ -45,6 +45,8 @@ var (
 
 	// PrettyFormat put spaces around "=" to look better.
 	PrettyFormat = true
+	// UnquoteValues strips "quotation marks" from values
+	UnquoteValues = true
 )
 
 func init() {
@@ -396,7 +398,7 @@ func (s *Section) KeyStrings() []string {
 }
 
 // KeysHash returns keys hash consisting of names and values.
-func (s *Section) KeysHash() map[string]string {
+func (s *Section) KeysHash(unquote bool) map[string]string {
 	if s.f.BlockMode {
 		s.f.lock.RLock()
 		defer s.f.lock.RUnlock()
@@ -404,7 +406,12 @@ func (s *Section) KeysHash() map[string]string {
 
 	hash := map[string]string{}
 	for key, value := range s.keysHash {
-		hash[key] = value
+		if unquote && value[0] == '"' {
+			l := len(value) - 1
+			hash[key] = value[1:l]
+		} else {
+			hash[key] = value
+		}
 	}
 	return hash
 }
